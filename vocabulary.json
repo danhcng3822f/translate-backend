@@ -1,14 +1,4 @@
 {
-  "hello": "xin chào",
-  "world": "thế giới",
-  "good": "tốt",
-  "morning": "buổi sáng",
-  "thank": "cảm ơn",
-  "you": "bạn",
-  "api": "giao diện lập trình ứng dụng",
-  "flask": "bình đựng",
-  "python": "con trăn",
-  "dragon fruit": "trái thanh long"
   "the": "cái, cái đó, những",
   "of": "của",
   "to": "đến, tới",
@@ -882,6 +872,5 @@
   "cotton": "bông",
   "born": "được sinh ra",
   "determine": "xác định",
-  "quart": "đơn vị đo thể tích",
-  "government": "chính phủ"
+  "quart": "đơn vị đo thể tích"
 }
