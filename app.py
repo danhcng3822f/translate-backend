@@ -11,12 +11,17 @@ translator = Translator()
 
 # Load từ điển từ file JSON
 def load_vocabulary():
-    if os.path.exists('vocabulary.json'):
-        with open('vocabulary.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return {}  # Nếu file chưa có, trả dict rỗng
+    try:
+        if os.path.exists('vocabulary.json'):
+            with open('vocabulary.json', 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}  # Nếu file chưa có, trả dict rỗng
+    except Exception as e:
+        print(f"Vocabulary load error: {e}")  # Log ra Render logs
+        return {}  # Fallback rỗng nếu lỗi
 
-vocab_dict = load_vocabulary()  # Load lúc start
+vocab_dict = load_vocabulary()  # en-vi dict
+reverse_vocab = {v.lower(): k for k, v in vocab_dict.items()}  # vi-en reverse (lowercase key để tra)
 
 # Dữ liệu mẫu JSON cũ (giữ nguyên)
 users = [
@@ -32,22 +37,35 @@ def get_users():
 @app.route('/api/translate', methods=['GET'])
 def translate_text():
     text = request.args.get('text', '').strip().lower()  # Lowercase để tra dict
-    src = request.args.get('src', 'en')
-    dest = request.args.get('dest', 'vi')
+    src = request.args.get('src', 'en')  # Nguồn: en hoặc vi
+    dest = request.args.get('dest', 'vi')  # Đích: vi hoặc en
     
     if not text:
         return jsonify({"error": "Missing 'text' parameter!"}), 400
     
-    # Ưu tiên tra từ điển (cho cả từ đơn và cụm từ, lowercase)
-    if text in vocab_dict:
-        translated = vocab_dict[text]
-        return jsonify({
-            "original": text,
-            "translated": translated,
-            "src_lang": src,
-            "dest_lang": dest,
-            "source": "vocabulary"  # Đánh dấu nguồn từ dict
-        })
+    # Tra từ điển phù hợp
+    if src == 'en' and dest == 'vi':
+        # en-vi: Tra key trong vocab_dict
+        if text in vocab_dict:
+            translated = vocab_dict[text]
+            return jsonify({
+                "original": text,
+                "translated": translated,
+                "src_lang": src,
+                "dest_lang": dest,
+                "source": "vocabulary"
+            })
+    elif src == 'vi' and dest == 'en':
+        # vi-en: Tra key trong reverse_vocab
+        if text in reverse_vocab:
+            translated = reverse_vocab[text]
+            return jsonify({
+                "original": text,
+                "translated": translated,
+                "src_lang": src,
+                "dest_lang": dest,
+                "source": "vocabulary"
+            })
     
     # Fallback Google Translate
     try:
@@ -65,12 +83,12 @@ def translate_text():
             "translated": result.text,
             "src_lang": result.src,
             "dest_lang": dest,
-            "source": "google_translate"  # Đánh dấu nguồn
+            "source": "google_translate"
         })
     except Exception as e:
         return jsonify({"error": f"Translation failed: {str(e)}"}), 500
 
-# Endpoint mới: Add/Update từ vựng (POST)
+# Endpoint add từ vựng (giữ nguyên, chỉ thêm en-vi)
 @app.route('/api/vocab/add', methods=['POST'])
 def add_vocabulary():
     data = request.json
@@ -80,7 +98,7 @@ def add_vocabulary():
     english = data['english'].strip().lower()
     vietnamese = data['vietnamese'].strip()
     
-    # Update dict
+    # Update dict en-vi
     vocab_dict[english] = vietnamese
     
     # Save lại file JSON
@@ -92,7 +110,7 @@ def add_vocabulary():
         "total_words": len(vocab_dict)
     }), 200
 
-# Endpoint GET để xem từ điển (tùy chọn)
+# Endpoint GET từ điển (giữ nguyên)
 @app.route('/api/vocab', methods=['GET'])
 def get_vocabulary():
     return jsonify(vocab_dict)
