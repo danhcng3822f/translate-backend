@@ -38,8 +38,8 @@ def translate_text():
     if not text:
         return jsonify({"error": "Missing 'text' parameter!"}), 400
     
-    # Tra từ điển trước (chỉ cho từ đơn, lowercase)
-    if ' ' not in text and text in vocab_dict:
+    # Ưu tiên tra từ điển (cho cả từ đơn và cụm từ, lowercase)
+    if text in vocab_dict:
         translated = vocab_dict[text]
         return jsonify({
             "original": text,
@@ -49,9 +49,17 @@ def translate_text():
             "source": "vocabulary"  # Đánh dấu nguồn từ dict
         })
     
-    # Fallback Google Translate cho câu phức tạp
+    # Fallback Google Translate
     try:
         result = translator.translate(text, src=src, dest=dest)
+        translated_lower = result.text.lower()
+        
+        # Kiểm tra lặp từ: Nếu dịch giống nguyên bản (lowercase), báo lỗi
+        if translated_lower == text:
+            return jsonify({
+                "error": "Sai từ vựng hoặc nó là tên riêng"
+            }), 400
+        
         return jsonify({
             "original": text,
             "translated": result.text,
