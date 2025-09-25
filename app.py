@@ -1,3 +1,4 @@
+import os  # Thêm import này nếu chưa có
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from googletrans import Translator
@@ -38,4 +39,6 @@ def translate_text():
         return jsonify({"error": f"Translation failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))  # Dùng $PORT nếu có, fallback 5000 cho local
+    app.run(host='0.0.0.0', port=port, debug=True)
     app.run(host='0.0.0.0', port=5000, debug=True)
